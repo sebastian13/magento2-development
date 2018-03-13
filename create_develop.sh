@@ -1,32 +1,34 @@
 #!/bin/bash
 DATE=`date +%Y%m%d`
 
-#LIVE_DIRECTORY=$1
-#DEV_DIRECTORY=$2/${DATE}develop
-
-#if [ ! "$1" ] || [ ! "$2" ]
-#then
-#    echo "Please specify two paths. The path to your live directory, and the path where you want the develop directory to be!"
-#    exit 1
-#fi
-#
-#if [ ! -d "$LIVE_DIRECTORY" ]; then
-#    echo "$LIVE_DIRECTORY"
-#    echo "Seems that your Live Directory does not exist!"
-#    exit 1
-#fi
-
-#DB_USER=root
+usage() { echo "Usage: $0 [-d <domain.examle>] [-w <web-service>] [SOURCE] [DESTINATION]" 1>&2; }
 
 # Define usable parameters
-while getopts ":u:d:p:f:" opt; do
+while getopts ":d:hpn::" opt; do
   case $opt in
     d) DEV_DOMAIN=${OPTARG}
-	echo
-	echo "Your Settings"
-	echo "-------------"
-	echo "Domain		| $OPTARG" >&2
-	;;
+      	echo
+      	echo "Your Settings"
+      	echo "-------------"
+      	echo "Domain		| $OPTARG" >&2
+      	;;
+
+    p )
+      UPDATE_PAYPAL=1
+      ;;
+
+    s )
+      UPDATE_STRIPE=1
+      ;;
+
+    n )
+      NGINX_CONF=1
+      ;;
+
+    h ) # Display help.
+      usage
+      exit 0
+      ;;
 
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -46,20 +48,22 @@ shift $(($OPTIND-1))
 LIVE_DIRECTORY=$1
 DEV_DIRECTORY=$2/${DATE}develop
 
+# Add a tailing Slash
 length=${#LIVE_DIRECTORY}
 last_char=${LIVE_DIRECTORY:length-1:1}
 [[ $last_char != "/" ]] && LIVE_DIRECTORY="$LIVE_DIRECTORY/"; :
 
-echo "Live directory	| $LIVE_DIRECTORY"
-echo "Dev. directory	| $DEV_DIRECTORY"
-echo
-
 # Check if [source] and [destination] were provided
 if [ ! "$1" ] || [ ! "$2" ]
 then
+    usage
     echo "Please specify two paths. The path to your live directory, and the path where you want the develop directory to be!"
     exit 1
 fi
+
+echo "Live directory  | $LIVE_DIRECTORY"
+echo "Dev. directory  | $DEV_DIRECTORY"
+echo
 
 # Check existence of Live Directory
 if [ ! -d "$LIVE_DIRECTORY" ]; then
@@ -124,28 +128,35 @@ echo
 echo "Delete Caches"
 docker exec $APACHE php bin/magento cache:flush
 docker exec -it $REDIS redis-cli FLUSHALL
+docker exec $APACHE php bin/magento cache:disable
 echo
 
-#docker exec -it ${DEV_DIRECTORY_NAME}_db_1 /usr/bin/mysql --defaults-file=/root/.my.cnf -D magento2
-#    UPDATE core_config_data \
-#        SET core_config_data.value='https://dev.libuni.eu/' \
-#        WHERE core_config_data.path='web/unsecure/base_url' \
-#            OR core_config_data.path='web/secure/base_url';
+if [ $UPDATE_PAYPAL=1 ]; then
+  echo "Setting Paypal to Sanbox Mode. Please specify API Credentials in Magento Admin"
+  docker exec ${DEV_DIRECTORY}_db_1 mysql -e "UPDATE core_config_data SET value = 1 WHERE path = 'paypal/wpp/sandbox_flag'" -D magento2
+  echo
+fi
 
-#    UPDATE core_config_data
-#        SET core_config_data.value='dev.libuni.eu'
-#        WHERE core_config_data.path='web/cookie/cookie_domain';
+if [ $UPDATE_STRIPE=1 ]; then
+  echo "Setting Stripe to Testing Mode"
+  docker exec ${DEV_DIRECTORY}_db_1 mysql -e "UPDATE core_config_data SET value = 'test' WHERE path = 'payment/cryozonic_stripe/stripe_mode'" -D magento2
+  echo
+fi
 
-#    quit
-#exit
+if [ $NGINX_CONF ]; then
+  echo "Creates a conf file for your Nginx-Proxy"
 
-# Update Upstream in Nginx-Proxy
-#sed -i "/set \$upstream_magento/c\\\tset \$upstream_magento ${DEV_DIRECTORY_NAME}_apache_1; # updated by create_develop.sh" \
-#    00-nginx-proxy/conf.d/dev.libuni.eu.conf
+  if [ ! -f ${DEV_DOMAIN}.conf ]; then
+    curl -O https://raw.githubusercontent.com/sebastian13/docker-compose-nginx-proxy/master/conf.d/example.com.conf
+    mv example.com.conf ${DEV_DOMAIN}.conf
+    sed -i.bak "s/example.com/${DEV_DOMAIN}/" ${DEV_DOMAIN}.conf && rm ${DEV_DOMAIN}.conf.bak
 
-# Restart Nginx-Proxy
-#docker exec 00-nginx-proxy service nginx reload
+    #sed -i.bak "/set \$upstream/c\\\tset \$upstream ${DEV_DIRECTORY}_apache_1; # updated by create_develop.sh" ${DEV_DOMAIN}.conf && rm ${DEV_DOMAIN}.conf.bak
+    sed -i.bak "s/.*set \$upstream.*/set \$upstream ${DEV_DIRECTORY}_apache_1; # updated by create_develop.sh/" ${DEV_DOMAIN}.conf && rm ${DEV_DOMAIN}.conf.bak
 
-#docker exec --user www-data $APACHE php bin/magento index:reindex
-#docker exec --user www-data $APACHE php bin/magento setup:di:compile
-#docker exec --user www-data $APACHE php bin/magento setup:static-content:deploy de_AT en_US de_DE
+  fi
+fi
+
+docker exec --user www-data $APACHE php bin/magento index:reindex
+docker exec --user www-data $APACHE php bin/magento setup:di:compile
+docker exec --user www-data $APACHE php bin/magento setup:static-content:deploy de_AT en_US de_DE
