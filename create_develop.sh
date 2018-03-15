@@ -4,7 +4,7 @@ DATE=`date +%Y%m%d`
 usage() { echo "Usage: $0 [-d <domain.examle>] [-w <web-service>] [SOURCE] [DESTINATION]" 1>&2; }
 
 # Define usable parameters
-while getopts ":d:hpn::" opt; do
+while getopts ":d:psnh::" opt; do
   case $opt in
     d) DEV_DOMAIN=${OPTARG}
       	echo

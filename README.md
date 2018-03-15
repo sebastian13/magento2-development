@@ -23,9 +23,9 @@ Parameter | Expected Syntax | Description | Necessary |
 ### How to use
 
 ```bash
-git clone ... ~/
-chmod +x ~/magento2-development/create_develop.sh
-~/magento2-development\create_develop.sh -d example.com -p -s -n [/path/to/your/running/instance] [/path/to/copy/directory/to]
+git clone ... ~/m2-dev
+chmod +x ~/m2-dev/create_develop.sh
+~/m2-dev/create_develop.sh -d example.com -p -s -n [/path/to/your/running/instance] [/path/to/copy/directory/to]
 ```
 
 ### What it does
