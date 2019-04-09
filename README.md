@@ -26,10 +26,12 @@ cd /docker/example
 
 ### Commands
 
-- deploy: Removes static files and runs setup:static-content:deploy
-- flush: Flushes magento and redis cache
-- fqdn: Replaces the FQDN
-- setup: Runs setup:upgrade and setup:di:compile
+| Command  | Description  |
+|----------| :--------------------------------------------------|
+| `deploy` | Removes static files and runs setup:static-content |
+| `flush`  | Flushes magento and redis cache                    |
+| `fqdn`   | Replace the Domain Name                            |
+| `setup`  | Runs setup:upgrade and setup:di:compile            |
 
 ### .env
 
