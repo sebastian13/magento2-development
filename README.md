@@ -1,44 +1,42 @@
-# Create Magento2 development containers
+# Magento2 helper
 
-This script takes your existing Magento2 docker containers and creates a development environment for you. It's build to be used with an environment similar to [fballiano's](https://github.com/fballiano/docker-magento2).
+This script helps running frequently used Magento 2 commands. It's build to be used with an environment similar to [fballiano's](https://github.com/fballiano/docker-magento2).
 
 ### Requirements
-* docker-compose installed
-* A **docker-compose.yml** file in your live directory
+* docker-compose
+* `docker-compose.yml` file
+* `.env` file
 
-### Parameters
+### Usage
 
-Parameter | Expected Syntax | Description | Necessary |
-:-------: | --------------- | :---------- | --- |        
--d        | dev.examle.com  | Your Development Domain            | required
--p        |                 | Sets PayPal-Express to Testing     | optional
--s        |                 | Sets Cryzionic Stripe to Testing   | optional
--n | | Creates a nginx conf file which you can use in your nginx-proxy | optional
--h | | Displays instructions |
+1. Clone
 
-<!--
--w        | apache          | The name of your webserver service | required
--->
-
-### How to use
-
-```bash
-git clone ... ~/m2-dev
-chmod +x ~/m2-dev/create_develop.sh
-~/m2-dev/create_develop.sh -d example.com -p -s -n [/path/to/your/running/instance] [/path/to/copy/directory/to]
+ ```bash
+mkdir ~/magento2-helper
+git clone https://github.com/sebastian13/magento2-helper.git ~/magento2-helper
+chmod +x ~/magento2-helper/*.sh
 ```
 
-### What it does
-1. **Copy the directory** provided to the location provided using rsync.
-2. docker-compose pull: **Downloads containres** specified in docker-compose.yml
-3. docker-compose up -d: **Starts containers**
-4. **Updates** file and folder **permissions** according to Magento's specifications for a development environment
-5. Updates Magento's **URL**
-6. Delete and **disables Cache**
-1. *Optional: Sets PayPal to Testing*
-1. *Optional: Sets Stripe to Testing*
-1. *Optional: Creates nginx.conf file*
-1. Runs Magento reindex, setup:di:compile and static-content:deploy
+1. Run
 
-### What it does not do (yet)
-1. Enables the nginx.conf file. You need to manually move it to your nginx-proxy
+ ```bash
+cd /docker/example
+~/magento2-helper/help.sh [deploy|flush|fqdn|setup]
+```
+
+### Commands
+
+- deploy: Removes static files and runs setup:static-content:deploy
+- flush: Flushes magento and redis cache
+- fqdn: Replaces the FQDN
+- setup: Runs setup:upgrade and setup:di:compile
+
+### .env
+
+The .env file should contain the following variables
+
+```bash
+FQDN=example.com
+MYSQL_DATABASE=
+MYSQL_ROOT_PASSWORD=
+```
