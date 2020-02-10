@@ -11,34 +11,45 @@ This script helps running frequently used Magento 2 commands. It's build to be u
 
 1. Clone
 
- ```bash
-mkdir ~/magento2-helper
-git clone https://github.com/sebastian13/magento2-helper.git ~/magento2-helper
-chmod +x ~/magento2-helper/*.sh
-```
+	```bash
+	mkdir ~/magento2-helper
+	git clone https://github.com/sebastian13/magento2-helper.git ~/magento2-helper
+	chmod +x ~/magento2-helper/*.sh
+	```
 
-1. Run
+2. Provide `.env` file
 
- ```bash
-cd /docker/example
-~/magento2-helper/help.sh [deploy|flush|fqdn|setup]
-```
+	```bash
+	FQDN=example.com
+	FQDN_DEV=test.example.com
+	MYSQL_DATABASE=
+	MYSQL_ROOT_PASSWORD=
+	```
 
-### Commands
+3. Run the script
 
-| Command  | Description  |
-|----------| :--------------------------------------------------|
-| `deploy` | Removes static files and runs setup:static-content |
-| `flush`  | Flushes magento and redis cache                    |
-| `fqdn`   | Replace the Domain Name                            |
-| `setup`  | Runs setup:upgrade and setup:di:compile            |
+	```bash
+	cd /docker/example
+	~/magento2-helper/help.sh [deploy|flush|fqdn|setup]
+	```
 
-### .env
+	#### Commands
 
-The .env file should contain the following variables
+	| Command  | Description  |
+	|----------| :--------------------------------------------------|
+	| `deploy` | - Removes static files<br/> - Runs setup:static-content |
+	| `dev` | - Creates a development instance |
+	| `flush` | - Flushes magento/varnish cache<br/> - Flushes redis cache |
+	| `production` | - Sets production FQDN<br/> - Sets paypal to production<br/> - Sets stripe to production<br/> - mode production<br/> - enables cache |
+	| `upgrade` | - Flushes the cache<br/> - Runs setup:upgrade<br> - Runs setup:di:compile<br> - Removes and regenerate static files |
+	
+### Example: Test-Setup
 
-```bash
-FQDN=example.com
-MYSQL_DATABASE=
-MYSQL_ROOT_PASSWORD=
-```
+1. Dupliate directory
+
+	```
+	rsync --info=progress2 -a <LIVE_DIRECTORY>/ <DEV_DIRECTORY>
+	```
+	
+2. Prepare directories for changes
+
